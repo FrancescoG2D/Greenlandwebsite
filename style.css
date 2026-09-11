@@ -126,8 +126,8 @@ body {
 /* SCENES WRAPPER (contenitore continuo con crossfade) */
 .scenes-wrapper {
   position: relative;
-  /* 900vh per scena x 4 scene (Strati, Risultato, Dettaglio, Contatti) */
-  height: 3600vh;
+  /* 900vh per fase x 3 fasi (Strati, Risultato, Contatti) */
+  height: 2700vh;
 }
 .scenes-sticky {
   position: sticky;
@@ -136,14 +136,11 @@ body {
   height: 100dvh;
   overflow: hidden;
 }
-.media-layer {
+#scene-canvas {
   position: absolute; inset: 0;
   width: 100%; height: 100%;
-  object-fit: cover;
-  opacity: 0;
-  transition: opacity 0.8s ease;
+  display: block;
 }
-.media-layer.active { opacity: 1; }
 
 .scene-scrim {
   position: absolute; inset: 0;
@@ -204,31 +201,6 @@ body {
 }
 .text-link:hover { border-bottom-color: #fff; }
 
-.value-row {
-  display: flex;
-  gap: 32px;
-  margin-top: 28px;
-  flex-wrap: wrap;
-}
-.value-item {
-  flex: 1;
-  min-width: 160px;
-  padding-left: 18px;
-  border-left: 1px solid rgba(255,255,255,0.3);
-}
-.value-label {
-  font-family: "Fraunces", Georgia, serif;
-  font-style: italic;
-  font-weight: 400;
-  font-size: 17px;
-  margin-bottom: 6px;
-}
-.value-text {
-  font-size: 13.5px;
-  line-height: 1.5;
-  color: rgba(255,255,255,0.75);
-}
-
 .overlay-contatti {
   text-align: center;
   left: 0; right: 0;
@@ -261,8 +233,6 @@ body {
 @media (max-width: 640px) {
   .nav-links a { font-size: 10px; padding: 5px 8px; }
   .hero-text, .overlay { padding-left: 8px; padding-right: 8px; }
-  .value-row { flex-direction: column; gap: 20px; }
-  .value-item { border-left: none; border-top: 1px solid rgba(255,255,255,0.3); padding-left: 0; padding-top: 14px; }
   .layer-sequence { flex-direction: column; gap: 8px; }
   .layer-sequence span { border-right: none; padding-right: 0; margin-right: 0; }
 }

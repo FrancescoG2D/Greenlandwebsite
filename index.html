@@ -16,7 +16,6 @@
   <div class="nav-links">
     <a href="#strati" data-target="strati">Strati</a>
     <a href="#risultato" data-target="risultato">Risultato</a>
-    <a href="#dettaglio" data-target="dettaglio">Dettaglio</a>
     <a href="#contatti" data-target="contatti">Contatti</a>
   </div>
 </nav>
@@ -36,13 +35,13 @@
   </div>
 </section>
 
-<!-- SEZIONI 2-4: GLI STRATI, IL RISULTATO, IL DETTAGLIO -->
-<!-- Un unico contenitore continuo: i video si alternano con una dissolvenza -->
-<!-- incrociata invece di "scorrere" come blocchi separati -->
+<!-- SEZIONI 2-3: GLI STRATI, IL RISULTATO, poi CONTATTI -->
+<!-- Le immagini (fotogrammi pre-estratti dai video) vengono disegnate -->
+<!-- su un canvas in base alla posizione di scroll: nessun video "cercato" -->
+<!-- in tempo reale, quindi nessuno scatto o attesa di rete -->
 <section class="scenes-wrapper" id="scenes-wrapper">
   <div class="scenes-sticky">
-    <video class="video-layer active" id="video-a" muted playsinline preload="auto"></video>
-    <video class="video-layer" id="video-b" muted playsinline preload="auto"></video>
+    <canvas id="scene-canvas"></canvas>
     <div class="scene-scrim"></div>
 
     <div class="overlay overlay-strati" data-segment="strati">
@@ -62,31 +61,11 @@
       <a class="text-link" href="galleria.html">Scopri tutti i lavori &rarr;</a>
     </div>
 
-    <div class="overlay overlay-dettaglio" data-segment="dettaglio">
-      <h2 class="scene-headline">Qualità che si vede, cura che si sente</h2>
-      <div class="value-row">
-        <div class="value-item">
-          <p class="value-label">Prodotto</p>
-          <p class="value-text">Fibre resistenti, dall'aspetto naturale in ogni stagione</p>
-        </div>
-        <div class="value-item">
-          <p class="value-label">Tecnica</p>
-          <p class="value-text">Posa curata strato dopo strato, senza scorciatoie</p>
-        </div>
-        <div class="value-item">
-          <p class="value-label">Servizio</p>
-          <p class="value-text">Al tuo fianco dal sopralluogo alla consegna</p>
-        </div>
-      </div>
-    </div>
-
     <div class="overlay overlay-contatti" data-segment="contatti">
       <h2 class="scene-headline">Pronto a trasformare il tuo giardino?</h2>
       <p class="scene-sub scene-sub-claim">Sempre verde</p>
       <a class="btn btn-whatsapp" href="https://wa.me/390000000000" target="_blank" rel="noopener">Preventivo su WhatsApp</a>
     </div>
-
-    <img class="media-layer" id="img-contatti" src="https://d8j0ntlcm91z4.cloudfront.net/user_3GaV1tebp6ZdOud63ROO5FRDuUT/hf_20260910_092124_d53b76ca-2dbd-4daf-a104-351332a73d90.png" alt="Paesaggio collinare verde con villetta">
   </div>
 </section>
 

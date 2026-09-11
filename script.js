@@ -1,8 +1,135 @@
-// Le 4 fasi (Strati, Risultato, Dettaglio, Contatti) vivono in un
-// unico contenitore "pinned" continuo. Un solo livello visibile alla
-// volta (video o immagine statica per i Contatti) cambia con una
-// dissolvenza incrociata quando lo scroll attraversa il confine tra
-// una fase e la successiva — nessuno "scorrimento" a blocchi.
+// Ogni fase (Strati, Risultato) è una sequenza di fotogrammi già
+// pronti (immagini), non un video. In base allo scroll calcoliamo
+// quale fotogramma mostrare e lo disegniamo su un canvas: nessun
+// video da "cercare" in tempo reale, quindi nessuno scatto e nessuna
+// attesa di rete. I Contatti sono una singola immagine statica.
+
+function pad(num, size) {
+  let s = String(num);
+  while (s.length < size) s = "0" + s;
+  return s;
+}
+
+function frameList(folder, count, digits) {
+  const list = [];
+  for (let i = 1; i <= count; i++) {
+    list.push(`${folder}/frame_${pad(i, digits)}.jpg`);
+  }
+  return list;
+}
+
+const SCENES = [
+  {
+    id: "strati",
+    type: "frames",
+    paths: frameList("frames/strati", 42, 3),
+    images: [],
+  },
+  {
+    id: "risultato",
+    type: "frames",
+    paths: frameList("frames/risultato", 60, 3),
+    images: [],
+  },
+  {
+    id: "contatti",
+    type: "image",
+    path: "https://d8j0ntlcm91z4.cloudfront.net/user_3GaV1tebp6ZdOud63ROO5FRDuUT/hf_20260910_092124_d53b76ca-2dbd-4daf-a104-351332a73d90.png",
+    images: [],
+  },
+];
+
+const canvas = document.getElementById("scene-canvas");
+const ctx = canvas.getContext("2d");
+const wrapper = document.getElementById("scenes-wrapper");
+const overlays = document.querySelectorAll(".overlay");
+
+function clamp(value, min, max) {
+  return Math.min(Math.max(value, min), max);
+}
+
+function resizeCanvas() {
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = canvas.clientWidth * dpr;
+  canvas.height = canvas.clientHeight * dpr;
+}
+
+// disegna un'immagine "a copertura" (come CSS object-fit: cover):
+// riempie tutto il canvas ritagliando l'eccesso, senza deformare
+function drawCover(img) {
+  if (!img || !img.complete || !img.naturalWidth) return;
+  const cw = canvas.width;
+  const ch = canvas.height;
+  const iw = img.naturalWidth;
+  const ih = img.naturalHeight;
+  const scale = Math.max(cw / iw, ch / ih);
+  const sw = cw / scale;
+  const sh = ch / scale;
+  const sx = (iw - sw) / 2;
+  const sy = (ih - sh) / 2;
+  ctx.drawImage(img, sx, sy, sw, sh, 0, 0, cw, ch);
+}
+
+// precarica tutte le immagini di una scena
+function preloadScene(scene) {
+  if (scene.type === "image") {
+    const img = new Image();
+    img.src = scene.path;
+    scene.images = [img];
+    return;
+  }
+  scene.images = scene.paths.map((p) => {
+    const img = new Image();
+    img.src = p;
+    return img;
+  });
+}
+
+SCENES.forEach(preloadScene);
+
+function showOverlayFor(segmentId, visible) {
+  overlays.forEach((overlay) => {
+    const isTarget = overlay.dataset.segment === segmentId;
+    overlay.classList.toggle("is-visible", isTarget && visible);
+  });
+}
+
+let lastDrawnKey = "";
+
+function updateScenes() {
+  const rect = wrapper.getBoundingClientRect();
+  const viewportHeight = window.innerHeight;
+  const scrollableHeight = rect.height - viewportHeight;
+
+  if (rect.top > 0 || rect.bottom < viewportHeight) {
+    overlays.forEach((o) => o.classList.remove("is-visible"));
+    if (rect.top > 0) return;
+  }
+
+  const overallProgress = clamp(-rect.top / scrollableHeight, 0, 1);
+  const rawIndex = overallProgress * SCENES.length;
+  const segmentIndex = clamp(Math.floor(rawIndex), 0, SCENES.length - 1);
+  const segmentProgress = clamp(rawIndex - segmentIndex, 0, 1);
+
+  const scene = SCENES[segmentIndex];
+  const frameCount = scene.images.length;
+  const frameIndex = clamp(
+    Math.round(segmentProgress * (frameCount - 1)),
+    0,
+    frameCount - 1
+  );
+
+  const key = segmentIndex + ":" + frameIndex;
+  if (key !== lastDrawnKey) {
+    drawCover(scene.images[frameIndex]);
+    lastDrawnKey = key;
+  }
+
+  const isLast = segmentIndex === SCENES.length - 1;
+  const upperBound = isLast ? 0.98 : 0.92;
+  const showOverlay = segmentProgress > 0.1 && segmentProgress < upperBound;
+  showOverlayFor(scene.id, showOverlay);
+}
 
 const heroWrapper = document.getElementById("hero-wrapper");
 const heroText = document.getElementById("hero-text");
@@ -14,13 +141,10 @@ function updateHero() {
   const scrollable = rect.height - window.innerHeight;
   const progress = clamp(-rect.top / scrollable, 0, 1);
 
-  // il testo originale della hero sparisce nel primo 30% dello scroll
   heroText.style.opacity = clamp(1 - progress / 0.3, 0, 1);
   scrollHint.style.opacity = clamp(1 - progress / 0.08, 0, 1);
 
-  // il nuovo testo appare tra il 25% e il 55%
   const appear = clamp((progress - 0.25) / 0.3, 0, 1);
-  // poi si sposta verso il basso e si rimpicciolisce tra il 60% e il 100%
   const move = clamp((progress - 0.6) / 0.4, 0, 1);
 
   heroTransitionText.style.opacity = appear;
@@ -29,164 +153,16 @@ function updateHero() {
   heroTransitionText.style.transform = `translate(-50%, -50%) scale(${scale})`;
 }
 
-const SCENES = [
-  {
-    id: "strati",
-    type: "video",
-    src: "https://d8j0ntlcm91z4.cloudfront.net/user_3GaV1tebp6ZdOud63ROO5FRDuUT/hf_20260910_104505_d413281e-46a5-432d-b82c-db6a172ef827.mp4",
-  },
-  {
-    id: "risultato",
-    type: "video",
-    src: "https://d8j0ntlcm91z4.cloudfront.net/user_3GaV1tebp6ZdOud63ROO5FRDuUT/hf_20260910_104510_2a9383a2-80e4-46ea-92c6-76c92a4d341e.mp4",
-  },
-  {
-    id: "dettaglio",
-    type: "video",
-    src: "https://d8j0ntlcm91z4.cloudfront.net/user_3GaV1tebp6ZdOud63ROO5FRDuUT/hf_20260910_111606_7467ad80-df16-4ce4-8da8-4017d9693350.mp4",
-  },
-  {
-    id: "contatti",
-    type: "image", // torna all'immagine hero, chiudendo il loop
-  },
-];
-
-const wrapper = document.getElementById("scenes-wrapper");
-const videoA = document.getElementById("video-a");
-const videoB = document.getElementById("video-b");
-const imgContatti = document.getElementById("img-contatti");
-const overlays = document.querySelectorAll(".overlay");
-
-let activeVideo = videoA;
-let inactiveVideo = videoB;
-let currentSegmentIndex = -1;
-let crossfading = false;
-let targetTime = 0;
-
-function clamp(value, min, max) {
-  return Math.min(Math.max(value, min), max);
-}
-
-function showOverlayFor(segmentId, visible) {
-  overlays.forEach((overlay) => {
-    const isTarget = overlay.dataset.segment === segmentId;
-    overlay.classList.toggle("is-visible", isTarget && visible);
-  });
-}
-
-function loadSegment(index, progress) {
-  const scene = SCENES[index];
-
-  if (scene.type === "image") {
-    activeVideo.classList.remove("active");
-    imgContatti.classList.add("active");
-    currentSegmentIndex = index;
-    window.setTimeout(() => {
-      crossfading = false;
-    }, 850);
-    return;
-  }
-
-  // se arriviamo da un'immagine (es. tornando indietro dai Contatti),
-  // nascondiamola prima di far ripartire un video
-  imgContatti.classList.remove("active");
-
-  inactiveVideo.src = scene.src;
-  inactiveVideo.load();
-
-  const onReady = () => {
-    inactiveVideo.removeEventListener("loadedmetadata", onReady);
-    inactiveVideo.currentTime = progress * (inactiveVideo.duration || 0);
-
-    inactiveVideo.classList.add("active");
-    activeVideo.classList.remove("active");
-
-    const oldActive = activeVideo;
-    activeVideo = inactiveVideo;
-    inactiveVideo = oldActive;
-
-    currentSegmentIndex = index;
-
-    window.setTimeout(() => {
-      crossfading = false;
-    }, 850);
-  };
-
-  inactiveVideo.addEventListener("loadedmetadata", onReady);
-}
-
-function updateScenes() {
-  const rect = wrapper.getBoundingClientRect();
-  const viewportHeight = window.innerHeight;
-  const scrollableHeight = rect.height - viewportHeight;
-
-  const overallProgress = clamp(-rect.top / scrollableHeight, 0, 1);
-
-  if (rect.top > 0 || rect.bottom < viewportHeight) {
-    overlays.forEach((o) => o.classList.remove("is-visible"));
-    if (rect.top > 0) return;
-  }
-
-  const rawIndex = overallProgress * SCENES.length;
-  const segmentIndex = clamp(Math.floor(rawIndex), 0, SCENES.length - 1);
-  const segmentProgress = clamp(rawIndex - segmentIndex, 0, 1);
-
-  if (segmentIndex !== currentSegmentIndex && !crossfading) {
-    crossfading = true;
-    loadSegment(segmentIndex, segmentProgress);
-  }
-
-  const currentScene = SCENES[segmentIndex];
-  if (!crossfading && currentScene.type === "video" && activeVideo.duration) {
-    targetTime = segmentProgress * activeVideo.duration;
-  }
-
-  // l'ultima scena (Contatti) resta visibile fino in fondo alla pagina
-  const isLast = segmentIndex === SCENES.length - 1;
-  const upperBound = isLast ? 0.98 : 0.9;
-  const showOverlay = !crossfading && segmentProgress > 0.12 && segmentProgress < upperBound;
-  showOverlayFor(currentScene.id, showOverlay);
-}
-
-// caricamento iniziale del primo video
-loadSegment(0, 0);
-crossfading = true;
-videoA.addEventListener(
-  "loadedmetadata",
-  () => {
-    crossfading = false;
-    currentSegmentIndex = 0;
-  },
-  { once: true }
-);
-
-// loop separato che avvicina gradualmente il video al fotogramma
-// target invece di "saltarci" di scatto: molto più morbido
-function smoothVideoLoop() {
-  if (!crossfading && activeVideo.duration) {
-    const diff = targetTime - activeVideo.currentTime;
-    if (Math.abs(diff) > 0.02) {
-      activeVideo.currentTime += diff * 0.15;
-    }
-  }
-  window.requestAnimationFrame(smoothVideoLoop);
-}
-window.requestAnimationFrame(smoothVideoLoop);
-
 let isProgrammaticScroll = false;
 
 function easeInOutQuad(t) {
   return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
 }
 
-// Scroll animato interamente sotto il nostro controllo: sappiamo con
-// certezza quando finisce (niente timer approssimativi o eventi del
-// browser che su salti lunghi arrivano tardi o troppo presto).
 function animateScrollTo(targetY, duration, onDone) {
   const startY = window.scrollY;
   const diff = targetY - startY;
   const startTime = performance.now();
-
   isProgrammaticScroll = true;
 
   function step(now) {
@@ -216,15 +192,25 @@ window.addEventListener("scroll", () => {
 });
 
 window.addEventListener("resize", () => {
-  updateHero();
-  updateScenes();
-});
-window.addEventListener("load", () => {
+  resizeCanvas();
   updateHero();
   updateScenes();
 });
 
-// Nav: scroll animato e preciso verso ogni fase, Contatti incluso
+window.addEventListener("load", () => {
+  resizeCanvas();
+  updateHero();
+  updateScenes();
+});
+
+// disegna subito il primo fotogramma appena l'immagine è pronta,
+// senza aspettare il primo scroll
+SCENES[0].images[0].addEventListener("load", () => {
+  resizeCanvas();
+  updateScenes();
+});
+resizeCanvas();
+
 document.querySelectorAll(".nav-links a").forEach((link) => {
   link.addEventListener("click", (e) => {
     e.preventDefault();
@@ -237,18 +223,10 @@ document.querySelectorAll(".nav-links a").forEach((link) => {
     const scrollableHeight = wrapperRect.height - window.innerHeight;
     const segmentLength = scrollableHeight / SCENES.length;
 
-    let preciseTop;
-    if (targetId === "contatti") {
-      // quasi l'ultimo fotogramma: il pulsante WhatsApp è già visibile
-      // (non il pixel esatto finale, che nasconderebbe l'overlay)
-      preciseTop = wrapperTop + segmentIndex * segmentLength + segmentLength * 0.9;
-    } else {
-      // a met\u00e0 scena: l'overlay con i contenuti/CTA \u00e8 gi\u00e0 visibile
-      preciseTop = wrapperTop + segmentIndex * segmentLength + segmentLength * 0.45;
-    }
+    const fraction = targetId === "contatti" ? 0.9 : 0.45;
+    const preciseTop = wrapperTop + segmentIndex * segmentLength + segmentLength * fraction;
 
     const distance = Math.abs(preciseTop - window.scrollY);
-    // durata proporzionale alla distanza, entro limiti ragionevoli
     const duration = clamp(distance / 2.2, 500, 2200);
 
     animateScrollTo(preciseTop, duration, () => {
