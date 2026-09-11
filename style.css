@@ -1,0 +1,268 @@
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+img, video { display: block; max-width: 100%; }
+
+body {
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: #0a140a;
+  color: #fff;
+}
+
+.display {
+  font-family: "Fraunces", Georgia, serif;
+  font-weight: 500;
+}
+
+/* NAV */
+.nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  background: rgba(20, 30, 20, 0.28);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+.nav-logo {
+  font-family: "Fraunces", Georgia, serif;
+  font-size: 18px;
+  font-weight: 500;
+}
+.nav-links { display: flex; gap: 8px; }
+.nav-links a {
+  color: #fff;
+  text-decoration: none;
+  font-size: 12px;
+  padding: 6px 12px;
+  border: 0.5px solid rgba(255,255,255,0.5);
+  border-radius: 20px;
+  transition: background 0.2s;
+}
+.nav-links a:hover { background: rgba(255,255,255,0.12); }
+
+/* HERO */
+.hero-wrapper {
+  position: relative;
+  height: 220vh; /* spazio extra di scroll per l'animazione del testo */
+}
+.hero-sticky {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+  display: flex;
+  align-items: flex-end;
+}
+.hero-bg {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  object-fit: cover;
+}
+.hero-scrim {
+  position: absolute; inset: 0;
+  background: linear-gradient(to top, rgba(6,12,6,0.85) 0%, rgba(6,12,6,0.35) 38%, transparent 65%);
+  z-index: 1;
+}
+.hero-text {
+  position: relative;
+  z-index: 2;
+  margin: 0 0 64px 40px;
+  max-width: 640px;
+  transition: opacity 0.2s linear;
+}
+.hero-text h1 {
+  font-family: "Fraunces", Georgia, serif;
+  font-weight: 500;
+  font-size: clamp(48px, 9vw, 100px);
+  line-height: 0.95;
+  letter-spacing: -0.01em;
+}
+.hero-claim {
+  font-family: "Fraunces", Georgia, serif;
+  font-style: italic;
+  font-weight: 400;
+  font-size: clamp(19px, 2.4vw, 26px);
+  margin-top: 12px;
+  color: rgba(255,255,255,0.92);
+}
+.hero-sub {
+  font-size: 16px;
+  line-height: 1.6;
+  color: rgba(255,255,255,0.78);
+  margin-top: 18px;
+  max-width: 440px;
+}
+.hero-transition-text {
+  position: absolute;
+  left: 50%;
+  top: 46vh;
+  transform: translate(-50%, -50%) scale(1);
+  text-align: center;
+  opacity: 0;
+  z-index: 2;
+  font-family: "Fraunces", Georgia, serif;
+  font-weight: 500;
+  font-size: clamp(32px, 6vw, 68px);
+  line-height: 1.08;
+  max-width: 760px;
+  padding: 0 24px;
+  pointer-events: none;
+  will-change: top, transform, opacity;
+}
+.scroll-hint {
+  position: absolute;
+  bottom: 24px; left: 50%;
+  transform: translateX(-50%);
+  font-size: 12px;
+  color: rgba(255,255,255,0.6);
+  z-index: 2;
+  transition: opacity 0.3s linear;
+}
+
+/* SCENES WRAPPER (contenitore continuo con crossfade) */
+.scenes-wrapper {
+  position: relative;
+  /* 900vh per scena x 4 scene (Strati, Risultato, Dettaglio, Contatti) */
+  height: 3600vh;
+}
+.scenes-sticky {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+}
+.media-layer {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity 0.8s ease;
+}
+.media-layer.active { opacity: 1; }
+
+.scene-scrim {
+  position: absolute; inset: 0;
+  background: linear-gradient(to top, rgba(6,12,6,0.88) 0%, rgba(6,12,6,0.4) 32%, transparent 60%);
+  z-index: 1;
+  pointer-events: none;
+}
+
+.overlay {
+  position: absolute;
+  left: 40px; right: 40px; bottom: 56px;
+  z-index: 2;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+  pointer-events: none;
+}
+.overlay.is-visible { opacity: 1; pointer-events: auto; }
+
+.scene-headline {
+  font-family: "Fraunces", Georgia, serif;
+  font-weight: 500;
+  font-size: clamp(30px, 4.6vw, 56px);
+  line-height: 1.05;
+  max-width: 680px;
+}
+.scene-sub {
+  font-size: 16px;
+  line-height: 1.6;
+  color: rgba(255,255,255,0.78);
+  margin-top: 14px;
+  max-width: 480px;
+}
+
+.layer-sequence {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 0;
+  margin-top: 28px;
+}
+.layer-sequence span {
+  font-size: 14px;
+  color: rgba(255,255,255,0.85);
+  padding-right: 16px;
+  margin-right: 16px;
+  border-right: 1px solid rgba(255,255,255,0.3);
+}
+.layer-sequence span:last-child { border-right: none; padding-right: 0; margin-right: 0; }
+
+.text-link {
+  display: inline-block;
+  margin-top: 22px;
+  font-size: 15px;
+  font-weight: 500;
+  color: #fff;
+  text-decoration: none;
+  border-bottom: 1px solid rgba(255,255,255,0.5);
+  padding-bottom: 2px;
+}
+.text-link:hover { border-bottom-color: #fff; }
+
+.value-row {
+  display: flex;
+  gap: 32px;
+  margin-top: 28px;
+  flex-wrap: wrap;
+}
+.value-item {
+  flex: 1;
+  min-width: 160px;
+  padding-left: 18px;
+  border-left: 1px solid rgba(255,255,255,0.3);
+}
+.value-label {
+  font-family: "Fraunces", Georgia, serif;
+  font-style: italic;
+  font-weight: 400;
+  font-size: 17px;
+  margin-bottom: 6px;
+}
+.value-text {
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: rgba(255,255,255,0.75);
+}
+
+.overlay-contatti {
+  text-align: center;
+  left: 0; right: 0;
+}
+.overlay-contatti .scene-headline { max-width: 560px; margin: 0 auto; }
+.scene-sub-claim {
+  font-family: "Fraunces", Georgia, serif;
+  font-style: italic;
+  font-weight: 400;
+  font-size: clamp(17px, 2.2vw, 22px);
+  color: rgba(255,255,255,0.85);
+  margin-top: 10px;
+}
+.overlay-contatti .btn { margin-top: 22px; }
+
+/* BUTTONS */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 12px 24px;
+  border-radius: 30px;
+  text-decoration: none;
+  color: #fff;
+}
+.btn-whatsapp { background: #25D366; }
+
+@media (max-width: 640px) {
+  .nav-links a { font-size: 10px; padding: 5px 8px; }
+  .hero-text, .overlay { padding-left: 8px; padding-right: 8px; }
+  .value-row { flex-direction: column; gap: 20px; }
+  .value-item { border-left: none; border-top: 1px solid rgba(255,255,255,0.3); padding-left: 0; padding-top: 14px; }
+  .layer-sequence { flex-direction: column; gap: 8px; }
+  .layer-sequence span { border-right: none; padding-right: 0; margin-right: 0; }
+}
